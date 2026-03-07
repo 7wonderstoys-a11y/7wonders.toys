@@ -2013,44 +2013,74 @@ function renderFeatured(){
   });
 }
 
-function renderShop(){
-  renderCatFilters();
-  let prods=D.products.filter(p=>!p.hide);
-  const q=($('searchinp')?.value||'').toLowerCase();
-  const sort=$('sortsel')?.value||'default';
-  const g=$('sgrid'),e=$('semp');
-  if(q)prods=prods.filter(p=>p.ne.toLowerCase().includes(q)||p.na.includes(q)||(p.cat||'').toLowerCase().includes(q));
-  if(sort==='price-asc')prods.sort((a,b)=>a.price-b.price);
-  if(sort==='price-desc')prods.sort((a,b)=>b.price-a.price);
-  if(sort==='popular')prods.sort((a,b)=>(b.sold||0)-(a.sold||0));
-  // If a specific category is selected OR search/sort active - flat grid
-  if(selCat!=='all'||q||sort!=='default'){
-    if(selCat!=='all')prods=prods.filter(p=>p.cat===selCat);
-    if(!prods.length){g.innerHTML='';e.style.display='block';return;}
-    e.style.display='none';
-    g.innerHTML=prods.map(pcard).join('');
-    g.style.display='grid';
-    $('scatsections').style.display='none';
+function renderShop(){function renderShop() {
+  if (typeof renderCatFilters === 'function') renderCatFilters();
+  
+  let prods = (D && D.products ? D.products : []).filter(p => !p.hide);
+  
+  const g = document.getElementById('shop-grid') || document.getElementById('sgrid');
+  const e = document.getElementById('semp');
+  const sec = document.getElementById('scatsections'); 
+
+  const q = (document.getElementById('searchinp')?.value || '').toLowerCase().trim();
+  if (q) {
+    prods = prods.filter(p => 
+      (p.ne || '').toLowerCase().includes(q) || 
+      (p.na || '').includes(q) || 
+      (p.cat || '').toLowerCase().includes(q)
+    );
+  }
+
+  const sort = document.getElementById('sortsel')?.value || 'default';
+  if (sort === 'price-asc') prods.sort((a, b) => a.price - b.price);
+  if (sort === 'price-desc') prods.sort((a, b) => b.price - a.price);
+  if (sort === 'popular') prods.sort((a, b) => (b.sold || 0) - (a.sold || 0));
+
+  const currentCategory = (typeof selCat !== 'undefined') ? selCat : 'all';
+
+  if (currentCategory !== 'all' || q || sort !== 'default') {
+    if (currentCategory !== 'all') {
+      prods = prods.filter(p => p.cat === currentCategory);
+    }
+    
+    if (sec) sec.style.display = 'none';
+    if (g) {
+      g.style.display = 'grid';
+      if (prods.length === 0) {
+        g.innerHTML = '';
+        if (e) e.style.display = 'block';
+      } else {
+        if (e) e.style.display = 'none';
+        g.innerHTML = prods.map(p => typeof pcard === 'function' ? pcard(p) : '').join('');
+      }
+    }
   } else {
-    // Show products grouped by category
-    g.style.display='none';
-    e.style.display='none';
-    const cats=[...new Set(prods.filter(p=>p.cat).map(p=>p.cat))];
-    const sec=$('scatsections');
-    if(!prods.length){g.innerHTML='';g.style.display='grid';e.style.display='block';sec.style.display='none';return;}
-    sec.style.display='block';
-    sec.innerHTML=cats.map(cat=>{
-      const items=prods.filter(p=>p.cat===cat);
-      return`<div class="sec">
-        <div class="stit" style="display:flex;align-items:center;justify-content:space-between">
-          <span>🏷️ ${cat}</span>
-          <button class="bs" onclick="selCategory('${cat}')" style="font-size:.72rem;padding:4px 10px">Filter →</button>
-        </div>
-        <div class="pgrid">${items.map(pcard).join('')}</div>
-      </div>`;
-    }).join('')||'<p style="color:var(--mu);font-size:.84rem;padding:20px">No products yet.</p>';
+    if (g) g.style.display = 'none';
+    if (e) e.style.display = 'none';
+    
+    const cats = [...new Set(prods.filter(p => p.cat).map(p => p.cat))];
+    
+    if (sec) {
+      sec.style.display = 'block';
+      if (prods.length === 0) {
+        sec.innerHTML = '<p style="text-align:center;padding:40px;color:var(--mu)">No products available.</p>';
+      } else {
+        sec.innerHTML = cats.map(cat => {
+          const items = prods.filter(p => p.cat === cat);
+          return `
+            <div class="sec">
+              <div class="stit" style="display:flex;align-items:center;justify-content:space-between">
+                <span>🏷️ ${cat}</span>
+                <button class="bs" onclick="selCategory('${cat}')" style="font-size:.72rem;padding:4px 10px">View All →</button>
+              </div>
+              <div class="pgrid">${items.map(p => typeof pcard === 'function' ? pcard(p) : '').join('')}</div>
+            </div>`;
+        }).join('');
+      }
+    }
   }
 }
+  
 
 // ================================================
 //  PRODUCT DETAIL
