@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://7wonderstoys-a11y.github.io/7wonders.toys/sitemap.xml
